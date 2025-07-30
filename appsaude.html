@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydration Tracker - Seu Acompanhamento Hídrico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f9ff;
+        }
+        
+        .wave-bottom {
+            position: relative;
+        }
+        
+        .wave-bottom::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-size: 600px 10px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%230ea5e9"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60-41.07,26-29.53,51.81-58.94,96.72-63.65,44.05-4.66,84.06,16.29,107.52,51.6,13.08,19.21,21.6,41.21,28.24,63.65V0Z" opacity=".5" fill="%230ea5e9"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%230ea5e9"/></svg>') repeat-x;
+            background-size: 1200px 20px;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .water-fill {
+            background: linear-gradient(to top, rgba(14, 165, 233, 0.8), rgba(56, 182, 255, 0.8));
+        }
+        
+        .notification-item {
+            transition: all 0.3s ease;
+        }
+        
+        .notification-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+    <header class="bg-sky-600 text-white py-8 wave-bottom">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center mb-4">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1558d9a4-c4df-46f1-a11e-5d8fb38b9c61.png" alt="Ícone de gota d'água azul em estilo minimalista com efeito 3D suave" class="w-20 h-20 object-contain" />
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Hydration Tracker</h1>
+            <p class="text-sky-100 opacity-90">Sua saúde começa com hidratação adequada</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 mt-8">
+        <section class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 glass">
+            <h2 class="text-xl sm:text-2xl font-semibold text-sky-800 mb-4">Calculadora Hídrica</h2>
+            <p class="text-gray-600 mb-6">Insira seus dados para calcular sua necessidade diária de água:</p>
+            
+            <form id="hydration-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+                    <input type="number" id="weight" min="30" max="200" required 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                </div>
+                
+                <div>
+                    <label for="height" class="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
+                    <input type="number" id="height" min="100" max="250" required 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                </div>
+                
+                <div>
+                    <label for="activity" class="block text-sm font-medium text-gray-700 mb-1">Nível de Atividade</label>
+                    <select id="activity" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                        <option value="1.2">Sedentário (pouco ou nenhum exercício)</option>
+                        <option value="1.375">Levemente ativo (exercício leve 1-3 dias/semana)</option>
+                        <option value="1.55" selected>Moderadamente ativo (exercício moderado 3-5 dias/semana)</option>
+                        <option value="1.725">Muito ativo (exercício intenso 6-7 dias/semana)</option>
+                        <option value="1.9">Extremamente ativo (exercício muito intenso + trabalho físico)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="climate" class="block text-sm font-medium text-gray-700 mb-1">Clima</label>
+                    <select id="climate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                        <option value="1" selected>Temperado</option>
+                        <option value="1.1">Quente</option>
+                        <option value="1.2">Muito quente/seco</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 ease-in-out transform hover:scale-102 shadow-md">
+                        Calcular Minha Necessidade Hídrica
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section id="results-section" class="hidden bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 glass">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <div class="lg:w-1/3">
+                    <h3 class="text-xl font-semibold text-sky-800 mb-4">Sua Necessidade Diária</h3>
+                    <div class="bg-sky-50 border border-sky-100 rounded-lg p-4">
+                        <div class="text-center mb-4">
+                            <div class="relative w-40 h-64 mx-auto bg-white border-2 border-sky-200 rounded-b-lg overflow-hidden mb-2">
+                                <div id="water-level" class="absolute bottom-0 left-0 right-0 water-fill transition-all duration-1000 ease-in-out" style="height: 0%"></div>
+                            </div>
+                            <p id="water-amount" class="text-3xl font-bold text-sky-700">0 L</p>
+                            <p class="text-sm text-gray-600">Recomendação diária</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Meta:</span>
+                                <span id="daily-goal" class="text-sm font-medium text-sky-700"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Consumido:</span>
+                                <span id="consumed" class="text-sm font-medium text-sky-700">0 L</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Restante:</span>
+                                <span id="remaining" class="text-sm font-medium text-sky-700"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="add-intake-btn" class="w-full mt-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition duration-300 shadow">
+                        + Adicionar Consumo
+                    </button>
+                </div>
+                
+                <div class="md:w-2/3">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-sky-800">Lembretes de Hidratação</h3>
+                        <button id="add-reminder-btn" class="bg-sky-600 hover:bg-sky-700 text-white py-1 px-4 rounded-lg text-sm font-medium transition duration-300 shadow">
+                            + Novo Lembrete
+                        </button>
+                    </div>
+                    
+                    <div id="reminders-list" class="space-y-3">
+                        <p class="text-gray-500 text-center py-8">Nenhum lembrete configurado ainda.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <div id="add-intake-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Adicionar Consumo</h3>
+                    <button id="close-intake-modal" class="text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="intake-amount" class="block text-sm font-medium text-gray-700 mb-1">Quantidade (ml)</label>
+                    <input type="number" id="intake-amount" min="50" max="1000" step="50" value="250" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-intake" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button id="confirm-intake" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="add-reminder-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Novo Lembrete</h3>
+                    <button id="close-reminder-modal" class="text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="reminder-time" class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                        <input type="time" id="reminder-time" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label for="reminder-message" class="block text-sm font-medium text-gray-700 mb-1">Mensagem</label>
+                        <input type="text" id="reminder-message" placeholder="Ex: Hora de beber água!" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                    </div>
+
+                    <div id="spotify-container" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Música do Lembrete</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="spotify-search" placeholder="Buscar música..." 
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
+                            <button id="spotify-search-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg">
+                                Buscar
+                            </button>
+                        </div>
+                        <div id="spotify-results" class="mt-2 max-h-40 overflow-y-auto"></div>
+                    </div>
+                    <button id="toggle-spotify" class="text-sm text-sky-600 hover:text-sky-800 mt-1 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.53 7.47l-5-5a.75.75 0 00-1.06 0l-5 5a.75.75 0 001.06 1.06l3.72-3.72V15a.75.75 0 001.5 0V4.81l3.72 3.72a.75.75 0 101.06-1.06z"></path>
+                        </svg>
+                        Adicionar música do Spotify
+                    </button>
+                    
+                    <div>
+                        <label for="reminder-days" class="block text-sm font-medium text-gray-700 mb-1">Dias da Semana</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="dom" class="rounded text-sky-600 focus:ring-sky-500">
+                                <span class="text-sm">Dom</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="seg" class="rounded text-sky-600 focus:ring-sky-500" checked>
+                                <span class="text-sm">Seg</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="ter" class="rounded text-sky-600 focus:ring-sky-500" checked>
+                                <span class="text-sm">Ter</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="qua" class="rounded text-sky-600 focus:ring-sky-500" checked>
+                                <span class="text-sm">Qua</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="qui" class="rounded text-sky-600 focus:ring-sky-500" checked>
+                                <span class="text-sm">Qui</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="sex" class="rounded text-sky-600 focus:ring-sky-500" checked>
+                                <span class="text-sm">Sex</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="sab" class="rounded text-sky-600 focus:ring-sky-500">
+                                <span class="text-sm">Sáb</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button id="cancel-reminder" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Cancelar
+                        </button>
+                        <button id="confirm-reminder" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition">
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-sky-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">Hydration Tracker - Mantenha seu corpo hidratado e saudável</p>
+            <p class="text-xs text-sky-200 mt-2">© 2023 Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos do formulário
+            const hydrationForm = document.getElementById('hydration-form');
+            const resultsSection = document.getElementById('results-section');
+            const waterAmount = document.getElementById('water-amount');
+            const dailyGoal = document.getElementById('daily-goal');
+            const consumed = document.getElementById('consumed');
+            const remaining = document.getElementById('remaining');
+            const waterLevel = document.getElementById('water-level');
+            
+            // Elementos dos modais
+            const addIntakeModal = document.getElementById('add-intake-modal');
+            const addIntakeBtn = document.getElementById('add-intake-btn');
+            const closeIntakeModal = document.getElementById('close-intake-modal');
+            const cancelIntake = document.getElementById('cancel-intake');
+            const confirmIntake = document.getElementById('confirm-intake');
+            const intakeAmount = document.getElementById('intake-amount');
+            
+            const addReminderModal = document.getElementById('add-reminder-modal');
+            const addReminderBtn = document.getElementById('add-reminder-btn');
+            const closeReminderModal = document.getElementById('close-reminder-modal');
+            const cancelReminder = document.getElementById('cancel-reminder');
+            const confirmReminder = document.getElementById('confirm-reminder');
+            const reminderTime = document.getElementById('reminder-time');
+            const reminderMessage = document.getElementById('reminder-message');
+            
+            // Variáveis de estado
+            let totalWaterNeeded = 0;
+            let currentIntake = 0;
+            let reminders = [];
+            let spotifyToken = null;
+            let selectedTrack = null;
+
+            // Spotify functions
+            function initSpotify() {
+                // You'll need to implement your own OAuth flow or use credentials
+                // This is just a placeholder for the implementation
+                axios.get('/api/spotify-token') 
+                    .then(response => {
+                        spotifyToken = response.data.token;
+                    })
+                    .catch(error => {
+                        console.error('Failed to get Spotify token:', error);
+                    });
+            }
+
+            function searchSpotify(query) {
+                if (!spotifyToken) return;
+                
+                axios.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`, {
+                    headers: { 'Authorization': `Bearer ${spotifyToken}` }
+                })
+                .then(response => {
+                    const results = response.data.tracks.items;
+                    const container = document.getElementById('spotify-results');
+                    container.innerHTML = '';
+                    
+                    results.forEach(track => {
+                        const trackEl = document.createElement('div');
+                        trackEl.className = 'bg-gray-50 p-2 rounded cursor-pointer hover:bg-gray-100';
+                        trackEl.innerHTML = `
+                            <p class="text-sm font-medium truncate">${track.name}</p>
+                            <p class="text-xs text-gray-500 truncate">${track.artists[0].name}</p>
+                            ${track.preview_url ? 
+                                `<audio src="${track.preview_url}" controls class="w-full mt-1 h-8"></audio>` : 
+                                '<p class="text-xs text-gray-400">Sem prévia</p>'
+                            }
+                        `;
+                        trackEl.addEventListener('click', () => {
+                            selectedTrack = {
+                                id: track.id,
+                                name: track.name,
+                                artist: track.artists[0].name,
+                                preview_url: track.preview_url
+                            };
+                        });
+                        container.appendChild(trackEl);
+                    });
+                })
+                .catch(error => {
+                    console.error('Spotify search failed:', error);
+                });
+            }
+
+            // Initialize Spotify on load
+            document.getElementById('toggle-spotify').addEventListener('click', () => {
+                const container = document.getElementById('spotify-container');
+                container.classList.toggle('hidden');
+                if (!spotifyToken) initSpotify();
+            });
+
+            document.getElementById('spotify-search-btn').addEventListener('click', () => {
+                const query = document.getElementById('spotify-search').value;
+                if (query) searchSpotify(query);
+            });
+
+            // Configuração inicial do horário atual
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            reminderTime.value = `${hours}:${minutes}`;
+            
+            // Event Listeners
+            hydrationForm.addEventListener('submit', calculateWaterNeeds);
+            addIntakeBtn.addEventListener('click', () => addIntakeModal.classList.remove('hidden'));
+            closeIntakeModal.addEventListener('click', () => addIntakeModal.classList.add('hidden'));
+            cancelIntake.addEventListener('click', () => addIntakeModal.classList.add('hidden'));
+            confirmIntake.addEventListener('click', addWaterIntake);
+            
+            addReminderBtn.addEventListener('click', () => addReminderModal.classList.remove('hidden'));
+            closeReminderModal.addEventListener('click', () => addReminderModal.classList.add('hidden'));
+            cancelReminder.addEventListener('click', () => addReminderModal.classList.add('hidden'));
+            confirmReminder.addEventListener('click', addReminder);
+            
+            // Função para calcular a necessidade de água
+            function calculateWaterNeeds(e) {
+                e.preventDefault();
+                
+                const weight = parseFloat(document.getElementById('weight').value);
+                const height = parseFloat(document.getElementById('height').value);
+                const activityLevel = parseFloat(document.getElementById('activity').value);
+                const climateFactor = parseFloat(document.getElementById('climate').value);
+                
+                // Cálculo baseado na fórmula: (peso * altura) / 100 * fator_atividade * fator_clima / 30
+                totalWaterNeeded = ((weight * height) / 100 * activityLevel * climateFactor / 30).toFixed(2);
+                
+                // Exibir resultados
+                waterAmount.textContent = `${totalWaterNeeded} L`;
+                dailyGoal.textContent = `${totalWaterNeeded} L`;
+                remaining.textContent = `${totalWaterNeeded} L`;
+                
+                // Resetar consumo
+                currentIntake = 0;
+                consumed.textContent = `0 L`;
+                waterLevel.style.height = `0%`;
+                
+                resultsSection.classList.remove('hidden');
+                updateReminderList();
+            }
+            
+            // Função para adicionar consumo de água
+            function addWaterIntake() {
+                const amount = parseInt(intakeAmount.value) / 1000; // Converter ml para litros
+                currentIntake += amount;
+                
+                consumed.textContent = `${currentIntake.toFixed(2)} L`;
+                
+                const remainingAmount = Math.max(0, (totalWaterNeeded - currentIntake).toFixed(2));
+                remaining.textContent = `${remainingAmount} L`;
+                
+                const percentage = Math.min(100, (currentIntake / totalWaterNeeded) * 100);
+                waterLevel.style.height = `${percentage}%`;
+                
+                addIntakeModal.classList.add('hidden');
+                intakeAmount.value = '250';
+                
+                // Adicionar animação de feedback
+                waterAmount.classList.add('pulse-animation');
+                setTimeout(() => {
+                    waterAmount.classList.remove('pulse-animation');
+                }, 1000);
+            }
+            
+            // Função para adicionar lembrete
+            function addReminder() {
+                const time = reminderTime.value;
+                const message = reminderMessage.value || 'Hora de beber água!';
+                
+                // Obter dias selecionados
+                const days = [];
+                const dayCheckboxes = document.querySelectorAll('#reminder-days input[type="checkbox"]:checked');
+                dayCheckboxes.forEach(checkbox => days.push(checkbox.value));
+                
+                if (days.length === 0) {
+                    alert('Selecione pelo menos um dia da semana!');
+                    return;
+                }
+                
+                const reminder = {
+                    id: Date.now(),
+                    time: time,
+                    message: message,
+                    days: days,
+                    active: true,
+                    track: selectedTrack
+                };
+                selectedTrack = null; // Reset selected track
+                document.getElementById('spotify-container').classList.add('hidden');
+                
+                reminders.push(reminder);
+                updateReminderList();
+                
+                // Resetar formulário
+                reminderMessage.value = '';
+                document.querySelectorAll('#reminder-days input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = ['seg', 'ter', 'qua', 'qui', 'sex'].includes(checkbox.value);
+                });
+                
+                addReminderModal.classList.add('hidden');
+                
+                // Configurar notificações (simuladas no navegador)
+                setupReminderNotifications(reminder);
+            }
+            
+            // Função para atualizar a lista de lembretes
+            function updateReminderList() {
+                const remindersList = document.getElementById('reminders-list');
+                
+                if (reminders.length === 0) {
+                    remindersList.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum lembrete configurado ainda.</p>';
+                    return;
+                }
+                
+                remindersList.innerHTML = '';
+                
+                reminders.forEach(reminder => {
+                    const reminderEl = document.createElement('div');
+                    reminderEl.className = 'bg-sky-50 rounded-lg p-4 notification-item';
+                    reminderEl.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium text-sky-800">${reminder.time} - ${reminder.message}</h4>
+                                ${reminder.track ? `
+                                    <audio controls class="w-full mt-2 h-8" src="${reminder.track.preview_url}"></audio>
+                                ` : ''}
+                                <p class="text-xs text-gray-500 mt-1">Dias: ${reminder.days.map(d => d.toUpperCase()).join(', ')}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="toggle-reminder text-xs px-2 py-1 rounded ${reminder.active ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}" data-id="${reminder.id}">
+                                    ${reminder.active ? 'Ativo' : 'Inativo'}
+                                </button>
+                                <button class="delete-reminder text-xs px-2 py-1 bg-red-500 text-white rounded" data-id="${reminder.id}">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    remindersList.appendChild(reminderEl);
+                });
+                
+                // Adicionar eventos aos botões
+                document.querySelectorAll('.toggle-reminder').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        toggleReminder(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-reminder').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        deleteReminder(id);
+                    });
+                });
+            }
+            
+            // Função para alternar status do lembrete
+            function toggleReminder(id) {
+                const reminder = reminders.find(r => r.id === id);
+                if (reminder) {
+                    reminder.active = !reminder.active;
+                    updateReminderList();
+                }
+            }
+            
+            // Função para deletar lembrete
+            function deleteReminder(id) {
+                reminders = reminders.filter(r => r.id !== id);
+                updateReminderList();
+            }
+            
+            // Função para configurar notificações (simuladas)
+            function setupReminderNotifications(reminder) {
+                if (!('Notification' in window)) {
+                    console.log('Este navegador não suporta notificações desktop');
+                    return;
+                }
+                
+                if (Notification.permission !== 'granted') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            scheduleReminderNotification(reminder);
+                        }
+                    });
+                } else {
+                    scheduleReminderNotification(reminder);
+                }
+            }
+            
+            // Função para agendar notificação (simulada)
+            function scheduleReminderNotification(reminder) {
+                // Em um aplicativo real, isso usaria a API de Notificações e alarmes
+                console.log(`Lembrete agendado para ${reminder.time} nos dias ${reminder.days.join(', ')}: ${reminder.message}`);
+            }
+        });
+    </script>
+</body>
+</html>
